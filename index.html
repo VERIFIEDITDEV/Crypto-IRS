@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Crypto IRS Dashboard</title>
+<title>Crypto IRS System</title>
 
 <style>
 body{
@@ -20,12 +20,9 @@ display:flex;
 justify-content:space-between;
 align-items:center;
 position:fixed;
+width:100%;
 top:0;
-left:0;
-right:0;
 }
-
-.menu{cursor:pointer;font-size:22px}
 
 .sidebar{
 position:fixed;
@@ -49,7 +46,9 @@ text-decoration:none;
 
 .sidebar a:hover{background:#00d084}
 
-.main{padding:80px 20px}
+.main{
+padding:80px 20px;
+}
 
 .page{display:none}
 .page.active{display:block}
@@ -57,8 +56,8 @@ text-decoration:none;
 .card{
 background:#1e293b;
 padding:20px;
-margin:10px 0;
 border-radius:10px;
+margin:10px 0;
 }
 
 .btn{
@@ -66,10 +65,10 @@ background:#00d084;
 padding:12px;
 border:none;
 color:white;
-border-radius:10px;
-cursor:pointer;
-margin-top:10px;
 width:100%;
+border-radius:10px;
+margin-top:10px;
+cursor:pointer;
 }
 
 input{
@@ -80,21 +79,9 @@ border-radius:10px;
 border:none;
 }
 
-.popup{
-position:fixed;
-inset:0;
-background:rgba(0,0,0,.8);
-display:flex;
-justify-content:center;
-align-items:center;
-}
-
-.popup-box{
-background:#1e293b;
-padding:20px;
-border-radius:10px;
-width:90%;
-max-width:350px;
+.locked{
+opacity:0.5;
+pointer-events:none;
 }
 </style>
 </head>
@@ -102,16 +89,16 @@ max-width:350px;
 <body>
 
 <div class="header">
-<div class="menu" onclick="toggle()">☰</div>
+<div onclick="toggle()">☰</div>
 <h3>Crypto IRS</h3>
-<div onclick="showPage('profile')">👤</div>
+<div onclick="show('profile')">👤</div>
 </div>
 
-<div class="sidebar" id="sidebar">
-<a href="#" onclick="showPage('dashboard')">Dashboard</a>
-<a href="#" onclick="showPage('deposit')">Deposit</a>
-<a href="#" onclick="showPage('withdraw')">Withdrawal</a>
-<a href="#" onclick="logout()">Logout</a>
+<div class="sidebar" id="side">
+<a onclick="show('dashboard')">Dashboard</a>
+<a onclick="show('deposit')">Activate ($150)</a>
+<a onclick="show('withdraw')">Withdraw</a>
+<a onclick="logout()">Logout</a>
 </div>
 
 <div class="main">
@@ -119,68 +106,53 @@ max-width:350px;
 <!-- DASHBOARD -->
 <div id="dashboard" class="page active">
 <div class="card">
-<h2>Total Balance</h2>
-<h1>$1,459.00</h1>
-<p id="status">Not Activated</p>
+<h2>Balance</h2>
+<h1>$1,456.00</h1>
+<p id="status">NOT ACTIVATED</p>
 </div>
 
-<div class="card">
-<h3>BTC: 0.016</h3>
-<h3>ETH: 0.00</h3>
-<h3>USDT: 0.00</h3>
-</div>
-
-<button class="btn" onclick="showPage('deposit')">Deposit $150 Activation</button>
-<button class="btn" onclick="checkAccess()">Check Withdrawal Access</button>
+<button class="btn" onclick="show('deposit')">Activate Account</button>
+<button class="btn" onclick="check()">Check Access</button>
 </div>
 
 <!-- DEPOSIT -->
 <div id="deposit" class="page">
-<h2>Activate Account</h2>
-<input id="amount" value="150" disabled>
+<h2>Pay $150 Activation Fee</h2>
+<input id="email" placeholder="Enter Email">
 <button class="btn" onclick="pay()">Pay with Paystack</button>
-<button class="btn" onclick="back()">Back</button>
 </div>
 
 <!-- WITHDRAW -->
 <div id="withdraw" class="page">
-<h2>Withdrawal Request</h2>
+<h2>Withdrawal</h2>
 
+<div id="withdrawBox" class="locked">
 <input placeholder="Wallet Address">
 <input placeholder="Amount">
+<button class="btn">Request Withdrawal</button>
+</div>
 
-<button class="btn" id="withdrawBtn" onclick="requestWithdraw()">Request Withdrawal</button>
-<button class="btn" onclick="back()">Back</button>
+<p id="msg"></p>
 </div>
 
 <!-- PROFILE -->
 <div id="profile" class="page">
 <h2>Profile</h2>
-<p>Email: Irs@user.com</p>
-<p>Status: <span id="accStatus">InActive</span></p>
-<button class="btn" onclick="back()">Back</button>
+<p>User: Demo Account</p>
+<p>Status: <span id="accStatus">Inactive</span></p>
 </div>
 
-</div>
-
-<!-- LOGIN POPUP -->
-<div class="popup" id="loginPopup">
-<div class="popup-box">
-<h3>Login</h3>
-<input placeholder="Email">
-<input placeholder="Password">
-<button class="btn" onclick="login()">Login</button>
-</div>
 </div>
 
 <script src="https://js.paystack.co/v1/inline.js"></script>
 
 <script type="module">
+
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 import { getFirestore, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
 const firebaseConfig = {
-apiKey:"AIzaSyDB5ydpKUhi3-PhyoN0v5lx3USq3G22gy0",
+apiKey:"AIzaSyDB5ydpKUhi3-PhyoN0v5USq3G22gy0",
 authDomain:"crypto-irs.firebaseapp.com",
 projectId:"crypto-irs",
 storageBucket:"crypto-irs.appspot.com",
@@ -191,24 +163,34 @@ appId:"1:942940547701:web:098cee1ab5820c4350663c"
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
-let user = "demoUser";
+let userEmail = "";
 
 window.pay = function(){
 
+userEmail = document.getElementById("email").value;
+
+if(!userEmail){
+alert("Enter email");
+return;
+}
+
 let handler = PaystackPop.setup({
+
 key:"pk_live_725e9c0357625ec847ec27b37e4d1033ac90a718",
-email:"irs@user.com",
+email:userEmail,
 amount:150*100,
+currency:"USD",
 
 callback: async function(res){
 
-await setDoc(doc(db,"users",user),{
-activated:true,
-payment:true
+await setDoc(doc(db,"users",userEmail),{
+email:userEmail,
+activated:true
 });
 
-alert("Activated Successfully");
+alert("Account Activated");
 location.reload();
+
 }
 
 });
@@ -216,44 +198,37 @@ location.reload();
 handler.openIframe();
 }
 
-window.checkAccess = async function(){
+window.check = async function(){
 
-const ref = doc(db,"users",user);
+if(!userEmail) userEmail = document.getElementById("email").value;
+
+const ref = doc(db,"users",userEmail);
 const snap = await getDoc(ref);
 
 if(snap.exists() && snap.data().activated){
-document.getElementById("withdrawBtn").disabled = false;
-document.getElementById("status").innerText="Activated";
+
+document.getElementById("status").innerText="ACTIVATED";
 document.getElementById("accStatus").innerText="Active";
-alert("Access Granted");
+document.getElementById("withdrawBox").classList.remove("locked");
+
 }else{
-document.getElementById("withdrawBtn").disabled = true;
-alert("Pay $150 to activate");
+alert("Not activated. Pay $150 first.");
 }
-
-}
-
-window.requestWithdraw = function(){
-alert("Withdrawal request sent (pending admin approval)");
-}
-
-window.login = function(){
-document.getElementById("loginPopup").style.display="none";
 }
 
 window.toggle = function(){
-document.getElementById("sidebar").classList.toggle("active");
+document.getElementById("side").classList.toggle("active");
 }
 
-window.showPage = function(id){
+window.show = function(id){
 document.querySelectorAll(".page").forEach(p=>p.classList.remove("active"));
 document.getElementById(id).classList.add("active");
-document.getElementById("sidebar").classList.remove("active");
 }
 
-window.back = function(){
-history.back();
+window.logout = function(){
+location.reload();
 }
+
 </script>
 
 </body>
