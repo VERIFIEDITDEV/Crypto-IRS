@@ -1,0 +1,390 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CryptoIRS</title>
+
+<style>
+*{
+margin:0;
+padding:0;
+box-sizing:border-box;
+font-family:Arial,sans-serif;
+}
+
+body{
+background:#0f172a;
+color:white;
+}
+
+.header{
+height:60px;
+background:#1e293b;
+display:flex;
+justify-content:space-between;
+align-items:center;
+padding:0 20px;
+position:fixed;
+top:0;
+left:0;
+right:0;
+z-index:1000;
+}
+
+.menu-btn{
+font-size:24px;
+cursor:pointer;
+}
+
+.sidebar{
+position:fixed;
+left:-250px;
+top:0;
+width:250px;
+height:100%;
+background:#1e293b;
+transition:.3s;
+padding-top:70px;
+z-index:999;
+}
+
+.sidebar.active{
+left:0;
+}
+
+.sidebar a{
+display:block;
+padding:15px 20px;
+color:white;
+text-decoration:none;
+}
+
+.sidebar a:hover{
+background:#00d084;
+}
+
+.main{
+padding:80px 20px;
+}
+
+.page{
+display:none;
+}
+
+.page.active{
+display:block;
+}
+
+.balance-card{
+background:#1e293b;
+padding:25px;
+border-radius:15px;
+margin-bottom:20px;
+}
+
+.cards{
+display:grid;
+grid-template-columns:repeat(auto-fit,minmax(150px,1fr));
+gap:15px;
+}
+
+.card{
+background:#1e293b;
+padding:20px;
+border-radius:15px;
+text-align:center;
+}
+
+.btn{
+background:#00d084;
+border:none;
+padding:12px 20px;
+border-radius:10px;
+color:white;
+cursor:pointer;
+margin-top:10px;
+}
+
+input,select{
+width:100%;
+padding:12px;
+margin:10px 0;
+border:none;
+border-radius:10px;
+}
+
+.popup{
+position:fixed;
+inset:0;
+background:rgba(0,0,0,.8);
+display:flex;
+justify-content:center;
+align-items:center;
+z-index:2000;
+}
+
+.popup-content{
+background:#1e293b;
+padding:30px;
+border-radius:15px;
+width:90%;
+max-width:400px;
+}
+
+.back{
+font-size:22px;
+cursor:pointer;
+margin-bottom:15px;
+}
+</style>
+</head>
+
+<body>
+
+<div class="header">
+<div class="menu-btn" onclick="toggleMenu()">☰</div>
+<h3>CryptoIRS</h3>
+<div onclick="openProfile()">👤</div>
+</div>
+
+<div class="sidebar" id="sidebar">
+<a href="#" onclick="showPage('dashboard')">🏠 Dashboard</a>
+<a href="#" onclick="showPage('deposit')">💰 Deposit</a>
+<a href="#" onclick="showPage('withdrawal')">📤 Withdrawal</a>
+<a href="#" onclick="showPage('profile')">👤 Profile</a>
+<a href="#" onclick="showPage('about')">ℹ About</a>
+<a href="#">🚪 Logout</a>
+</div>
+
+<div class="main">
+
+<div id="dashboard" class="page active">
+
+<div class="balance-card">
+<h2>Total Balance</h2>
+<h1>$1,450.00</h1>
+</div>
+
+<div class="cards">
+<div class="card">
+<h3>BTC</h3>
+<p>0.0164 BTC</p>
+</div>
+
+<div class="card">
+<h3>ETH</h3>
+<p>0.00 ETH</p>
+</div>
+
+<div class="card">
+<h3>USDT</h3>
+<p>0.00 USDT</p>
+</div>
+</div>
+
+<br>
+
+<button class="btn" onclick="showPage('deposit')">
+Deposit
+</button>
+
+<button class="btn" onclick="showPage('withdrawal')">
+Withdraw
+</button>
+
+</div>
+
+<div id="deposit" class="page">
+
+<div class="back" onclick="showPage('dashboard')">
+🔙
+</div>
+
+<h2>Deposit Funds</h2>
+
+<input type="number" id="amount" placeholder="Amount">
+
+<button class="btn" onclick="payNow()">
+Pay with Paystack
+</button>
+
+</div>
+
+<div id="withdrawal" class="page">
+
+<div class="back" onclick="showPage('dashboard')">
+🔙
+</div>
+
+<h2>Withdrawal</h2>
+
+<select>
+<option>BTC</option>
+<option>ETH</option>
+<option>USDT</option>
+</select>
+
+<input type="text" placeholder="Wallet Address">
+
+<input type="number" placeholder="Amount">
+
+<button class="btn">
+Request Withdrawal
+</button>
+
+</div>
+
+<div id="profile" class="page">
+
+<div class="back" onclick="showPage('dashboard')">
+🔙
+</div>
+
+<h2>Profile</h2>
+
+<p>Name: John Doe</p>
+<p>Email: john@example.com</p>
+
+<button class="btn">
+Edit Profile
+</button>
+
+</div>
+
+<div id="about" class="page">
+
+<div class="back" onclick="showPage('dashboard')">
+🔙
+</div>
+
+<h2>About</h2>
+
+<p>
+CryptoIRS Live Dashboard
+built with HTML, CSS,
+JavaScript, Firebase and Paystack.
+</p>
+
+</div>
+
+</div>
+
+<div class="popup" id="authPopup">
+
+<div class="popup-content">
+
+<h2>Login</h2>
+
+<input type="email" placeholder="Email">
+
+<input type="password" placeholder="Password">
+
+<button class="btn">
+Login
+</button>
+
+<br><br>
+
+<button class="btn">
+Sign Up
+</button>
+
+</div>
+
+</div>
+
+<script src="https://js.paystack.co/v1/inline.js"></script>
+
+<script>
+function toggleMenu(){
+document.getElementById('sidebar')
+.classList.toggle('active');
+}
+
+function showPage(page){
+
+document
+.querySelectorAll('.page')
+.forEach(p=>p.classList.remove('active'));
+
+document
+.getElementById(page)
+.classList.add('active');
+
+document
+.getElementById('sidebar')
+.classList.remove('active');
+}
+
+function payNow(){
+
+let amount =
+document.getElementById('amount').value;
+
+if(!amount){
+alert('Enter amount');
+return;
+}
+
+let handler = PaystackPop.setup({
+
+key:'sk_live_39b40d9f97850958ad4f5ec56cd2c04dcb454441',
+
+email:'customer@email.com',
+
+amount:amount*100,
+
+currency:'USD',
+
+callback:function(response){
+
+alert(
+'Payment Successful: '
++ response.reference
+);
+
+}
+
+});
+
+handler.openIframe();
+
+}
+
+function openProfile(){
+showPage('profile');
+}
+</script>
+<script type="module">
+  // Firebase SDK Imports
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import { getAnalytics } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-analytics.js";
+import { getAuth } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+import { getFirestore } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+// Firebase Configuration
+const firebaseConfig = {
+  apiKey: "AIzaSyDB5ydpKUhi3-PhyoN0v5lx3USq3G22gy0",
+  authDomain: "crypto-irs.firebaseapp.com",
+  projectId: "crypto-irs",
+  storageBucket: "crypto-irs.firebasestorage.app",
+  messagingSenderId: "942940547701",
+  appId: "1:942940547701:web:098cee1ab5820c4350663c",
+  measurementId: "G-0LQZXZBE9R"
+};
+
+// Initialize Firebase
+const app = initializeApp(firebaseConfig);
+const analytics = getAnalytics(app);
+
+// Authentication
+const auth = getAuth(app);
+
+// Database
+const db = getFirestore(app);
+
+console.log("Firebase Connected Successfully");
+</script>
+</body>
+  </html>
